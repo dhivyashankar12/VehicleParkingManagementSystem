@@ -1,0 +1,46 @@
+{% load static %}
+{% block body %}
+<html>
+<head>
+{% include 'header.html' %}
+
+</head>
+<body>
+{% include 'navigation.html' %}
+<style>
+a {
+  color:  #EE1D29;
+}
+a:hover {
+  color: yellow;
+}
+
+.contactlink:hover {
+  color: blue;
+}
+</style>
+<div class="container text-center" style = "margin-top:50px" id="contact">
+       <h1 class="text-center font-bold" style="font-family : Times New Roman;color : black"><u>Contact Us</u></h1>
+	 <br><br><br>
+      <div class="row mt-5">
+          <div class="col-lg-3 col-sm-6 mydivstyle">
+		  <h4><i class="fas fa-phone-square"></i> Contact</h4>
+              <p class = "mt-3 text-danger font-weight-bold"><a class = "contactlink" href="tel:+91 9879879879">+91 9879879879</a></p>
+          </div>
+          <div class="col-lg-3 col-sm-6 mydivstyle">
+		  <h4><i class="fas fa-envelope"></i> Send Mail</h4>
+              <p class = "mt-3 text-danger font-weight-bold"><a class = "contactlink" href="https://mail.google.com/mail/u/0/?fs=1&tf=cm&to=%7B%7Bp.email%7D%7D">abcvehicles@gmail.com</a></p>
+          </div>
+		  <div class="col-lg-3 col-sm-6 mydivstyle">
+		  <h4><i class="fas fa-address-card"></i> Office Address</h4>
+              <p class = "mt-3 text-danger font-weight-bold"><a class = "contactlink" href="https://www.google.com/maps/place/Coimbatore+Institute+of+Technology/@11.0306204,77.028439,17z/data=!4m13!1m7!3m6!1s0x3ba859b569f9c10d:0x3a21b1743fa4af15!2sAvinashi+Rd,+Tamil+Nadu!3b1!8m2!3d11.0304624!4d77.0279026!3m4!1s0x3ba858979f85136b:0xdd9ca28d3c37cf8a!8m2!3d11.0283259!4d77.0272806">Coimbatore</a></p>
+          </div>
+		  <div class="col-lg-3 col-sm-6 mydivstyle">
+		  <h4><i class="far fa-clock"> </i> Office Hours</h4>
+              <p class = "mt-3 text-danger font-weight-bold">9:00 AM to 7:00 PM</p>
+          </div>
+      </div>
+  </div>
+  </body>
+  </html>
+{% endblock %}

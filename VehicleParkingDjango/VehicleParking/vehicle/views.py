@@ -1,4 +1,4 @@
-from django.db.models import Q
+from django.db.models import Q #queries
 from django.shortcuts import render,redirect
 from .models import *
 from django.contrib.auth.models import User
@@ -7,6 +7,8 @@ from django.contrib import messages
 from datetime import date
 from datetime import datetime, timedelta, time
 import random
+from django.utils import timezone
+
 # Create your views here.
 
 def Index(request):
@@ -57,35 +59,16 @@ def Logout(request):
     return redirect('index')
 
 
-def change_password(request):
-    if not request.user.is_authenticated:
-        return redirect('admin_login')
-    error = ""
-    if request.method == "POST":
-        o = request.POST['password']
-        n = request.POST['newpassword']
-        try:
-            u = User.objects.get(id=request.user.id)
-            if u.check_password(o):
-                u.set_password(n)
-                u.save()
-                error = "no"
-            else:
-                error = "not"
-        except:
-            error = "yes"
-    d = {'error': error}
-    return render(request,'change_password.html',d)
-
-
 def add_category(request):
     if not request.user.is_authenticated:
         return redirect('admin_login')
     error = ""
     if request.method=="POST":
         cn = request.POST['categoryname']
+        sc = request.POST.get('slotcount', 0)
+
         try:
-            Category.objects.create(categoryname=cn)
+            Category.objects.create(categoryname=cn, slot_count=int(sc))
             error = "no"
         except:
             error = "yes"
@@ -114,7 +97,9 @@ def edit_category(request,pid):
     error = ""
     if request.method == 'POST':
         cn = request.POST['categoryname']
+        sc = request.POST.get('slotcount', 0)
         category.categoryname = cn
+        category.slot_count = int(sc)
         try:
             category.save()
             error = "no"
@@ -135,17 +120,47 @@ def add_vehicle(request):
         rn = request.POST['regno']
         on = request.POST['ownername']
         oc = request.POST['ownercontact']
-        pd = request.POST['pdate']
-        it = request.POST['intime']
+        pd_str = request.POST['pdate']
+        it_str = request.POST['intime']
         status = "In"
-        category = Category.objects.get(categoryname=ct)
 
         try:
-            Vehicle.objects.create(parkingnumber=pn,category=category,vehiclecompany=vc,regno=rn,ownername=on,ownercontact=oc,pdate=pd,intime=it,outtime='',parkingcharge='',remark='',status=status)
-            error = "no"
-        except:
+            date_part = datetime.strptime(pd_str, '%Y-%m-%d').date()
+            time_part = datetime.strptime(it_str, '%H:%M').time()
+            it = timezone.make_aware(datetime.combine(date_part, time_part))
+        except ValueError:
             error = "yes"
-    d = {'error':error,'category1':category1}
+            it = None
+        
+        if it:
+            try:
+                category = Category.objects.get(categoryname=ct)
+                if category.current_slot < category.slot_count:
+
+                    Vehicle.objects.create(
+                        parkingnumber=pn,
+                        category=category,
+                        vehiclecompany=vc,
+                        regno=rn,
+                        ownername=on,
+                        ownercontact=oc,
+                        pdate=pd_str,
+                        intime=it,
+                        outtime=None,
+                        parkingcharge='',
+                        remark='',
+                        status=status
+                    )
+                    category.current_slot +=1
+                    category.save()
+                    error = "no"
+                else:
+                    error = "Parking full for this category"
+            except Exception as e:
+                print("Error while adding vehicle:", e)
+                error = str(e) 
+    
+    d = {'error': error, 'category1': category1}
     return render(request, 'add_vehicle.html', d)
 
 def manage_incomingvehicle(request):
@@ -162,17 +177,37 @@ def view_incomingdetail(request,pid):
     vehicle = Vehicle.objects.get(id=pid)
     if request.method == 'POST':
         rm = request.POST['remark']
-        ot = request.POST['outtime']
-        pc = request.POST['parkingcharge']
-        status = "Out"
+        ot_str = request.POST['outtime']
         try:
+            outtime = datetime.strptime(ot_str, '%Y-%m-%dT%H:%M')
+            outtime = timezone.make_aware(outtime)
+
+            intime = vehicle.intime
+            if timezone.is_naive(intime):
+                intime = timezone.make_aware(intime)
+            duration = outtime - intime
+            hours = int(duration.total_seconds() // 3600)
+            if duration.total_seconds() % 3600 > 0:
+                hours += 1  
+
+            # Rate by category
+            rate_map = {
+                "2-Wheeler": 10,
+                "4-Wheeler": 20,
+                "Truck": 30
+            }
+            category_name = vehicle.category.categoryname
+            rate_per_hour = rate_map.get(category_name, 15)  # default ₹15/hr
+            charge = hours * rate_per_hour        
+            
             vehicle.remark = rm
-            vehicle.outtime = ot
-            vehicle.parkingcharge = pc
-            vehicle.status = status
+            vehicle.outtime = ot_str
+            vehicle.parkingcharge = f"₹{charge}"
+            vehicle.status = "Out"
             vehicle.save()
             error = "no"
-        except:
+        except Exception as e:
+            print("Error:", e)
             error = "yes"
 
     d = {'vehicle': vehicle,'error':error}

@@ -1,0 +1,25 @@
+# Python cache
+__pycache__/
+*.py[cod]
+
+# IDE files
+.idea/
+.vscode/
+
+# SQLite DB
+db.sqlite3
+db-*.sqlite3
+
+# Environment
+.env
+
+# Zip files
+*.zip
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+*.zip
+.idea/
+.vscode/
+*.log
